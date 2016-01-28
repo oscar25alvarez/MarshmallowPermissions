@@ -14,14 +14,17 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class MainActivity
     extends AppCompatActivity
     implements View.OnClickListener{
 
     private static final int REQUEST_CODE_ASK_PERMISSIONS_CALENDAR = 126; //REQUEST CODE 1 TO 255
     private static final int REQUEST_CODE_ASK_PERMISSIONS_SMS = 128;
-    private static final int REQUEST_CODE_ASK_PERMISSIONS_PHONE = 130;
     private static final int REQUEST_CODE_ASK_PERMISSIONS_MMS = 132;
+    private static final int REQUEST_CODE_ASK_PERMISSIONS_MULTIPLE = 134;
     private Button buttonCalendar;
     private Button buttonSms;
     private Button buttonTwoPermissions;
@@ -45,19 +48,6 @@ public class MainActivity
             int hasReadCalendarPermission = ContextCompat.checkSelfPermission(MainActivity.this,
                                                                               Manifest.permission.READ_CALENDAR);
             if (hasReadCalendarPermission != PackageManager.PERMISSION_GRANTED) {
-                if (!ActivityCompat.shouldShowRequestPermissionRationale(MainActivity.this, Manifest.permission.READ_CALENDAR)) {
-                    showNeedsPermissionMessage("YOU CAN'T WORK IF YOU DENIED THIS PERMISSION.",
-                                               new DialogInterface.OnClickListener() {
-                                                   @Override
-                                                   public void onClick(DialogInterface dialog,
-                                                                       int which) {
-                                                       ActivityCompat.requestPermissions(MainActivity.this,
-                                                                                         new String[]{Manifest.permission.READ_CALENDAR},
-                                                                                         REQUEST_CODE_ASK_PERMISSIONS_CALENDAR);
-                                                   }
-                                               });
-                    return;
-                }
                 ActivityCompat.requestPermissions(MainActivity.this,
                                                   new String[]{Manifest.permission.READ_CALENDAR},
                                                   REQUEST_CODE_ASK_PERMISSIONS_CALENDAR);
@@ -66,7 +56,8 @@ public class MainActivity
                 readCalendar();
             }
 
-        } else if ( v == buttonSms ) {
+        }
+        if ( v == buttonSms ) {
             // Handle clicks for buttonSms
             int hasReadSMSPermission = ContextCompat.checkSelfPermission(MainActivity.this,
                                                                               Manifest.permission.READ_SMS);
@@ -91,11 +82,80 @@ public class MainActivity
                 // READ SMS WITHOUT PROBLEM
                 readSMS();
             }
-        } else if (v == buttonTwoPermissions) {
+        }
+        if (v == buttonTwoPermissions) {
+            List<String> permissionsNeeded = new ArrayList<>();
+            final List<String> permissionsList = new ArrayList<>();//***
 
-        } else if (v == buttonMmsPermission) {
+            if (!addPermission(permissionsList, Manifest.permission.ACCESS_FINE_LOCATION, MainActivity.this))
+                permissionsNeeded.add("GPS");
+            if (!addPermission(permissionsList, Manifest.permission.BODY_SENSORS, MainActivity.this))
+                permissionsNeeded.add("Body Sensors");
+            if (!addPermission(permissionsList, Manifest.permission.READ_EXTERNAL_STORAGE, MainActivity.this))
+                permissionsNeeded.add("Read External Storage");
+
+            if (permissionsList.size() > 0) {
+                if (permissionsNeeded.size() > 0) {
+                    // Need Rationale
+                    String message = "Se necesitan permisos para " + permissionsNeeded.get(0);
+                    for (int i = 1; i < permissionsNeeded.size(); i++)
+                        message = message + ", " + permissionsNeeded.get(i);
+                    showNeedsPermissionMessage(message,
+                                        new DialogInterface.OnClickListener() {
+                                            @Override
+                                            public void onClick(DialogInterface dialog, int which) {
+                                                ActivityCompat.requestPermissions(MainActivity.this,
+                                                                                  permissionsList.toArray(new String[permissionsList.size()]),
+                                                                   REQUEST_CODE_ASK_PERMISSIONS_MULTIPLE);
+                                            }
+                                        });
+                    return;
+                }
+                ActivityCompat.requestPermissions(MainActivity.this,
+                                                  permissionsList.toArray(new String[permissionsList.size()]),
+                                   REQUEST_CODE_ASK_PERMISSIONS_MULTIPLE);
+                return;
+            }
+
+            readMultiple();
 
         }
+        if (v == buttonMmsPermission) {
+            // Handle clicks for buttonMMS
+            int hasReadSMSPermission = ContextCompat.checkSelfPermission(MainActivity.this,
+                                                                         Manifest.permission.RECEIVE_MMS);
+            if (hasReadSMSPermission != PackageManager.PERMISSION_GRANTED) {
+                if (!ActivityCompat.shouldShowRequestPermissionRationale(MainActivity.this, Manifest.permission.RECEIVE_MMS)) {
+                    showNeedsPermissionMessage("YOU CAN'T WORK IF YOU DENIED THIS PERMISSION.",
+                                               new DialogInterface.OnClickListener() {
+                                                   @Override
+                                                   public void onClick(DialogInterface dialog,
+                                                                       int which) {
+                                                       ActivityCompat.requestPermissions(MainActivity.this,
+                                                                                         new String[]{Manifest.permission.RECEIVE_MMS},
+                                                                                         REQUEST_CODE_ASK_PERMISSIONS_MMS);
+                                                   }
+                                               });
+                    return;
+                }
+                ActivityCompat.requestPermissions(MainActivity.this,
+                                                  new String[]{Manifest.permission.RECEIVE_MMS},
+                                                  REQUEST_CODE_ASK_PERMISSIONS_MMS);
+            } else {
+                // READ SMS WITHOUT PROBLEM
+                readSMS();
+            }
+        }
+    }
+
+    private boolean addPermission(List<String> permissionsList, String permission, AppCompatActivity activity) {
+        if (ContextCompat.checkSelfPermission(activity, permission) != PackageManager.PERMISSION_GRANTED) {
+            permissionsList.add(permission);
+            // Check for Rationale Option
+            if (!ActivityCompat.shouldShowRequestPermissionRationale(activity, permission))
+                return false;
+        }
+        return true;
     }
 
     private void readSMS() {
@@ -114,8 +174,12 @@ public class MainActivity
         Toast.makeText(MainActivity.this, "I CAN READ MMS :D.", Toast.LENGTH_SHORT).show();
     }
 
+    private void readMultiple() {
+        Toast.makeText(MainActivity.this, "I CAN READ BODY SENSORS, EXTERNAL STORAGE AND LOCATION :D.", Toast.LENGTH_SHORT).show();
+    }
+
     private void permissionsNotGranted() {
-        Toast.makeText(MainActivity.this, "PFFFFF.", Toast.LENGTH_SHORT).show();
+        Toast.makeText(MainActivity.this, "PFF NO PERMISSION.", Toast.LENGTH_SHORT).show();
     }
 
 
@@ -155,7 +219,7 @@ public class MainActivity
                 permissionsNotGranted();
             }
             break;
-        case REQUEST_CODE_ASK_PERMISSIONS_PHONE:
+        case REQUEST_CODE_ASK_PERMISSIONS_MULTIPLE:
             //Two at same time
             boolean result = true;
             for (int i : grantResults) {
