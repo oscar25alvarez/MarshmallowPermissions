@@ -2,8 +2,10 @@ package com.globant.testmarshmallow;
 
 import android.Manifest;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
@@ -68,9 +70,7 @@ public class MainActivity
                                                    @Override
                                                    public void onClick(DialogInterface dialog,
                                                                        int which) {
-                                                       ActivityCompat.requestPermissions(MainActivity.this,
-                                                                                         new String[]{Manifest.permission.READ_SMS},
-                                                                                         REQUEST_CODE_ASK_PERMISSIONS_SMS);
+                                                       startActivityForResult(new Intent(Settings.ACTION_APPLICATION_SETTINGS), 0);
                                                    }
                                                });
                     return;
@@ -104,9 +104,7 @@ public class MainActivity
                                         new DialogInterface.OnClickListener() {
                                             @Override
                                             public void onClick(DialogInterface dialog, int which) {
-                                                ActivityCompat.requestPermissions(MainActivity.this,
-                                                                                  permissionsList.toArray(new String[permissionsList.size()]),
-                                                                   REQUEST_CODE_ASK_PERMISSIONS_MULTIPLE);
+                                                startActivityForResult(new Intent(Settings.ACTION_APPLICATION_SETTINGS), 0);
                                             }
                                         });
                     return;
@@ -131,9 +129,7 @@ public class MainActivity
                                                    @Override
                                                    public void onClick(DialogInterface dialog,
                                                                        int which) {
-                                                       ActivityCompat.requestPermissions(MainActivity.this,
-                                                                                         new String[]{Manifest.permission.RECEIVE_MMS},
-                                                                                         REQUEST_CODE_ASK_PERMISSIONS_MMS);
+                                                       startActivityForResult(new Intent(Settings.ACTION_APPLICATION_SETTINGS), 0);
                                                    }
                                                });
                     return;
@@ -195,7 +191,7 @@ public class MainActivity
     private void showNeedsPermissionMessage(String message, DialogInterface.OnClickListener listener) {
         new AlertDialog.Builder(MainActivity.this)
             .setMessage(message)
-            .setPositiveButton("Agree", listener)
+            .setPositiveButton("Go to Settings", listener)
             .setNegativeButton("Cancel", null)
             .create()
             .show();
